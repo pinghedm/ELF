@@ -1,3 +1,4 @@
 elf
 backend/.envrc
 backend/**/__pycache__
+backend/elf.db

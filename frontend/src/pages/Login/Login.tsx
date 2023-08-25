@@ -53,6 +53,12 @@ const Login = ({}: LoginProps) => {
                         onChange={(e) => {
                             setPassword(e.target.value);
                         }}
+                        onPressEnter={() => {
+                            if (!name || !password) {
+                                return;
+                            }
+                            loginMutation.mutate({ name, password });
+                        }}
                     />
                 </Form.Item>
                 <Form.Item style={{ position: "absolute", right: "10px" }}>

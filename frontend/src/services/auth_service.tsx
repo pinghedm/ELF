@@ -38,3 +38,21 @@ export const useLogin = () => {
     );
     return mutation;
 };
+
+export const useEnsureCSRF = () => {
+    const _get = async () => {
+        const res = await axios.get("/auth/get_csrf");
+        return res.data;
+    };
+
+    const query = useQuery(["CSRF"], _get, {
+        cacheTime: Infinity,
+        staleTime: Infinity,
+    });
+    return query;
+};
+
+export const logout = async () => {
+    await axios.get("/auth/logout");
+    window.location.reload();
+};

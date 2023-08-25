@@ -4,4 +4,4 @@ alembic[tz]==1.11.3
 Flask-SQLAlchemy==3.0.5
 Flask_Login==0.6.2
 Flask_Cors==4.0.0
-Flask_WTF==1.1.1
+flask-seasurf==1.1.1

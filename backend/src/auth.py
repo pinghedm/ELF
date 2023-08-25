@@ -1,4 +1,4 @@
-from flask import Blueprint, request, abort
+from flask import Blueprint, request, abort, make_response, current_app, session, g
 from .models import Person
 from .app import csrf
 from werkzeug.security import check_password_hash
@@ -34,3 +34,11 @@ def get_current_user():
 @bp.route("/logout")
 def logout():
     logout_user()
+    return ""
+
+
+@bp.route("/get_csrf")
+@csrf.exempt
+@csrf.set_cookie
+def get_csrf():
+    return ""

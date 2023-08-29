@@ -78,6 +78,31 @@ class Event(db.Model):
         ),
     )
 
+    def serialize(self, include_people=True):
+        person_events = []
+        reported_by = ""
+        if include_people:
+            person_events = PersonEvent.query.filter_by(event=self.id)
+            reported_by = (
+                db.session.execute(db.select(Person).filter(id=self.reported_by))
+                .one()
+                .token
+            )
+        initial = {
+            "event_type": self.event_type,
+            "reported_by": reported_by,
+            "token": self.token,
+            "created": self.created.isoformat(),
+            "location": self.location,
+        }
+        for pe in person_events:
+            if pe.relation_type == PersonEventType.PRIMARY.value:
+                initial["primary_person_token"] = pe.person.token
+            elif pe.relation_type == PersonEventType.SECONDARY.value:
+                initial["secondary_person_token"] = pe.person.token
+
+        return initial
+
     @staticmethod
     def create(
         event_type,

@@ -15,9 +15,10 @@ export interface Event {
     secondary_person_token?: string;
     token: string;
     location?: string;
+    created: string;
 }
 
-type CreateEventType = Omit<Event, "token" | "reported_by"> & {
+type CreateEventType = Omit<Event, "token" | "reported_by" | "created"> & {
     quantity: number;
 };
 
@@ -33,10 +34,12 @@ export const useCreateNewEvent = () => {
         onMutate: () => {
             queryClient.cancelQueries(["leaderboardData"]);
             queryClient.cancelQueries(["locations"]);
+            queryClient.cancelQueries(["person"]);
         },
         onSettled: () => {
             queryClient.invalidateQueries(["leaderboardData"]);
             queryClient.invalidateQueries(["locations"]);
+            queryClient.invalidateQueries(["person"]);
         },
     });
     return mutation;

@@ -24,8 +24,9 @@ import {
 } from "services/leaderboard_service";
 import { ColumnsType } from "antd/es/table";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 
-const defaultEvent: Omit<Event, "token" | "reported_by"> & {
+const defaultEvent: Omit<Event, "token" | "reported_by" | "created"> & {
     quantity: number;
 } = { event_type: 1, primary_person_token: "", quantity: 1 };
 
@@ -37,7 +38,7 @@ const AddEventModal = ({
     onCancel: () => void;
 }) => {
     const [newEvent, setNewEvent] = useState<
-        Omit<Event, "token" | "reported_by"> & { quantity: number }
+        Omit<Event, "token" | "reported_by" | "created"> & { quantity: number }
     >({ ...defaultEvent });
 
     const event_options = useMemo(() => {
@@ -450,6 +451,7 @@ const Home = ({}: HomeProps) => {
             width: 50,
         },
     ];
+    const navigate = useNavigate();
 
     return (
         <div style={{ height: "100%", width: "100%" }}>
@@ -490,6 +492,55 @@ const Home = ({}: HomeProps) => {
                     total: leaderboardData?.length ?? 0,
                 }}
                 style={{ height: "100%", width: "100%" }}
+                onRow={(record, index) => ({
+                    onClick: () => {
+                        navigate({
+                            pathname: `/person/${record.person.token}`,
+                            search: window.location.search,
+                        });
+                    },
+                    style: { cursor: "pointer" },
+                })}
+                summary={(currentData) => {
+                    console.log(currentData);
+                    const totalKills = currentData.reduce(
+                        (memo, next) => memo + next.kills,
+                        0,
+                    );
+                    const totalAssists = currentData.reduce(
+                        (memo, next) => memo + next.assists,
+                        0,
+                    );
+                    const totalObserves =
+                        currentData.reduce(
+                            (memo, next) => memo + next.observes,
+                            0,
+                        ) + totalKills;
+
+                    return (
+                        <Table.Summary>
+                            <Table.Summary.Row
+                                style={{ backgroundColor: "lightgray" }}
+                            >
+                                <Table.Summary.Cell index={0}>
+                                    Total
+                                </Table.Summary.Cell>
+                                <Table.Summary.Cell index={1} align="right">
+                                    -
+                                </Table.Summary.Cell>
+                                <Table.Summary.Cell index={2} align="right">
+                                    {totalKills}
+                                </Table.Summary.Cell>
+                                <Table.Summary.Cell index={3} align="right">
+                                    {totalAssists}
+                                </Table.Summary.Cell>
+                                <Table.Summary.Cell index={4} align="right">
+                                    {totalObserves}
+                                </Table.Summary.Cell>
+                            </Table.Summary.Row>
+                        </Table.Summary>
+                    );
+                }}
             />
         </div>
     );

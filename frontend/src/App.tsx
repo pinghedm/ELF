@@ -1,13 +1,20 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useNavigate,
+} from "react-router-dom";
 import { Layout, Menu, Spin, Button } from "antd";
 import Home from "pages/Home/Home.lazy";
 import Login from "pages/Login/Login.lazy";
+import PersonDetails from "pages/PersonDetails/PersonDetails.lazy";
 import axios from "axios";
 import { useCurrentUser, useEnsureCSRF, logout } from "services/auth_service";
 const _App = () => {
   useEnsureCSRF();
   const { data: currentUser, status } = useCurrentUser();
+  const navigate = useNavigate();
 
   if (status === "loading") {
     return <Spin />;
@@ -24,10 +31,14 @@ const _App = () => {
           theme="dark"
           mode="horizontal"
           items={[
-            { key: "home", label: "" },
+            { key: "home", label: "Home" },
+            // { key: "profile", label: "Home" },
             // { key: "users", label: "Users" },
           ]}
           style={{ width: "100%", height: "100%" }}
+          onClick={(item) => {
+            navigate({ pathname: item.key, search: window.location.search });
+          }}
         />
         <Button
           type="text"
@@ -43,7 +54,8 @@ const _App = () => {
         style={{ padding: "5px 10px", height: "100%", width: "100%" }}
       >
         <Routes>
-          , width: '100%' <Route path="*" element={<Home />} />
+          <Route path="*" element={<Home />} />
+          <Route path="person/:token" element={<PersonDetails />} />
         </Routes>
       </Layout.Content>
     </Layout>

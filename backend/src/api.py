@@ -1,5 +1,5 @@
-from flask import Blueprint, request, abort, session
-from .models import Person, Event, PersonEvent, EventType, PersonEventType
+from flask import Blueprint, request, abort, session, make_response
+from .models import Person, Event, PersonEvent, EventType, PersonEventType, db
 from flask_login import login_required, current_user
 
 
@@ -47,6 +47,55 @@ def create_event():
             continue
             # return "Invalid Event", 400
     return "", 200
+
+
+@bp.route("/get_person/<token>")
+def get_person(token):
+    person = Person.query.filter_by(token=token).one_or_404()
+    people = db.session.execute(db.select(Person)).scalars().all()
+    people_token_by_id = {p.id: p.token for p in people}
+
+    person_events_subquery = (
+        db.session.query(PersonEvent.event)
+        .filter(Person.id.in_([person.id]))
+        .subquery()
+    )
+    person_events = (
+        db.session.execute(
+            db.select(PersonEvent).filter(PersonEvent.event.in_(person_events_subquery))
+        )
+        .scalars()
+        .all()
+    )
+
+    event_pks = {pe.event for pe in person_events}
+    events = (
+        db.session.execute(db.select(Event).filter(Event.id.in_(event_pks)))
+        .scalars()
+        .all()
+    )
+
+    serial_events_by_id = {
+        e.id: {
+            **e.serialize(include_people=False),
+            "reported_by": people_token_by_id[e.reported_by],
+        }
+        for e in events
+    }
+
+    for pe in person_events:
+        if pe.relation_type == PersonEventType.PRIMARY.value:
+            serial_events_by_id[pe.event]["primary_person_token"] = people_token_by_id[
+                pe.person
+            ]
+        elif pe.relation_type == PersonEventType.SECONDARY.value:
+            serial_events_by_id[pe.event][
+                "secondary_person_token"
+            ] = people_token_by_id[pe.person]
+
+    res = person.serialize()
+    res["events"] = list(serial_events_by_id.values())
+    return res
 
 
 @bp.route("/get_leaderboard_data")

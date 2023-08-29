@@ -20,15 +20,14 @@ const PersonDetails = ({}: PersonDetailsProps) => {
             ),
         [people],
     );
-
     const columns: ColumnsType<Event> = [
         {
             title: "",
             key: "created",
             render: (e) =>
-                DateTime.fromISO(e.created).toLocaleString(
-                    DateTime.DATETIME_SHORT,
-                ),
+                DateTime.fromISO(e.created, { zone: "utc" })
+                    .toLocal()
+                    .toLocaleString(DateTime.DATETIME_SHORT),
             sorter: (e1, e2) => (e1.created < e2.created ? -1 : 1),
         },
         {

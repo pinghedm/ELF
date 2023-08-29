@@ -502,7 +502,6 @@ const Home = ({}: HomeProps) => {
                     style: { cursor: "pointer" },
                 })}
                 summary={(currentData) => {
-                    console.log(currentData);
                     const totalKills = currentData.reduce(
                         (memo, next) => memo + next.kills,
                         0,

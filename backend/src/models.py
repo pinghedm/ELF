@@ -5,6 +5,7 @@ from flask_login.mixins import UserMixin
 from werkzeug.security import generate_password_hash
 from .utils import gen_token
 from sqlalchemy import MetaData
+from sqlalchemy.sql import func
 
 
 db = SQLAlchemy(
@@ -65,6 +66,10 @@ class Event(db.Model):
     token = db.Column(
         db.String, nullable=False, unique=True, default=lambda: gen_token(prefix="EV")
     )
+    created = db.Column(
+        db.DateTime, nullable=False, default=func.now(), server_default=func.now()
+    )
+    location = db.Column(db.String, nullable=True)
 
     __table_args__ = (
         CheckConstraint(
@@ -75,7 +80,11 @@ class Event(db.Model):
 
     @staticmethod
     def create(
-        event_type, reported_by_token, primary_person_token, secondary_person_token
+        event_type,
+        reported_by_token,
+        primary_person_token,
+        secondary_person_token,
+        location,
     ):
         if not EventType(event_type):
             raise TypeError
@@ -83,6 +92,8 @@ class Event(db.Model):
             raise TypeError
         reported_by_person = Person.query.filter_by(token=reported_by_token).first()
         new_event = Event(event_type=event_type, reported_by=reported_by_person.id)
+        if location:
+            new_event.location = location
         db.session.add(new_event)
 
         primary_person = Person.query.filter_by(token=primary_person_token).first()

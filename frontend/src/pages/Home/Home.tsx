@@ -1,7 +1,22 @@
 import React, { useState, useMemo } from "react";
-import { Modal, Typography, Input, Button, Select, Popover, Table } from "antd";
+import {
+    Modal,
+    Typography,
+    Input,
+    Button,
+    Select,
+    Popover,
+    Table,
+    InputNumber,
+    AutoComplete,
+} from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { Event, EventType, useCreateNewEvent } from "services/event_service";
+import {
+    Event,
+    EventType,
+    useCreateNewEvent,
+    useAllLocations,
+} from "services/event_service";
 import { useAllPersons, useCreatePerson } from "services/person_service";
 import {
     useLeaderboardData,
@@ -9,6 +24,10 @@ import {
 } from "services/leaderboard_service";
 import { ColumnsType } from "antd/es/table";
 import styled from "styled-components";
+
+const defaultEvent: Omit<Event, "token" | "reported_by"> & {
+    quantity: number;
+} = { event_type: 1, primary_person_token: "", quantity: 1 };
 
 const AddEventModal = ({
     open,
@@ -18,11 +37,8 @@ const AddEventModal = ({
     onCancel: () => void;
 }) => {
     const [newEvent, setNewEvent] = useState<
-        Omit<Event, "token" | "reported_by">
-    >({
-        event_type: 1,
-        primary_person_token: "",
-    });
+        Omit<Event, "token" | "reported_by"> & { quantity: number }
+    >({ ...defaultEvent });
 
     const event_options = useMemo(() => {
         const options = [];
@@ -41,6 +57,7 @@ const AddEventModal = ({
     }, []);
 
     const { data: allPeople } = useAllPersons();
+    const { data: allLocations } = useAllLocations();
 
     const createEventMutation = useCreateNewEvent();
 
@@ -308,6 +325,59 @@ const AddEventModal = ({
                         </Popover>
                     </div>
                 ) : null}
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "5px",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography.Text
+                        style={{ width: "150px", fontSize: "16px" }}
+                    >
+                        How many:
+                    </Typography.Text>
+                    <InputNumber
+                        min={1}
+                        value={newEvent.quantity}
+                        onChange={(num) => {
+                            setNewEvent((ev) => ({
+                                ...ev,
+                                quantity: Number(num),
+                            }));
+                        }}
+                    />
+                </div>
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "5px",
+                        alignItems: "center",
+                    }}
+                >
+                    <Typography.Text
+                        style={{ width: "150px", fontSize: "16px" }}
+                    >
+                        Where:{" "}
+                    </Typography.Text>
+                    <AutoComplete
+                        style={{ width: "200px" }}
+                        options={(allLocations ?? []).map((l) => ({
+                            label: l,
+                            value: l,
+                            key: l,
+                        }))}
+                        value={newEvent?.location}
+                        onChange={(val: string) => {
+                            setNewEvent((e) => ({ ...e, location: val }));
+                        }}
+                        onSelect={(val: string) => {
+                            setNewEvent((e) => ({ ...e, location: val }));
+                        }}
+                    />
+                </div>
                 <Button
                     type="primary"
                     size="large"
@@ -316,7 +386,10 @@ const AddEventModal = ({
                     }
                     onClick={() => {
                         createEventMutation.mutate(newEvent, {
-                            onSettled: onCancel,
+                            onSettled: () => {
+                                setNewEvent({ ...defaultEvent });
+                                onCancel();
+                            },
                         });
                     }}
                 >

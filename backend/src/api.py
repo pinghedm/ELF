@@ -13,6 +13,13 @@ def get_all_persons():
     return {"people": [p.serialize() for p in people]}
 
 
+@bp.route("/get_all_locations")
+@login_required
+def get_all_locations():
+    names = [t[0] for t in Event.query.with_entities(Event.location).distinct().all()]
+    return {"locations": list({n for n in names if n})}
+
+
 @bp.route("/create_person", methods=["POST"])
 @login_required
 def create_person():
@@ -26,15 +33,19 @@ def create_person():
 def create_event():
     post_data = request.json
     current_user_token = current_user.token
-    try:
-        Event.create(
-            post_data["event_type"],
-            current_user_token,
-            post_data["primary_person_token"],
-            post_data.get("secondary_person_token", None),
-        )
-    except TypeError:
-        return "Invalid Event", 400
+    quantity = post_data.get("quantity", 1)
+    for _ in range(quantity):
+        try:
+            Event.create(
+                post_data["event_type"],
+                current_user_token,
+                post_data["primary_person_token"],
+                post_data.get("secondary_person_token", None),
+                post_data.get("location", ""),
+            )
+        except TypeError:
+            continue
+            # return "Invalid Event", 400
     return "", 200
 
 
